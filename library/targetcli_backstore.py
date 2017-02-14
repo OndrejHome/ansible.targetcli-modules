@@ -6,11 +6,11 @@ module: targetcli_backstore
 short_description: TargetCLI backstore module
 description:
      - module for handling backstore objects in targetcli ('/backstores').
-version_added: "0.1"
+version_added: "2.0"
 options:
   backstore_type:
     description:
-      - Type of storage in TargetCLI
+      - Type of storage in TargetCLI (block, fileio, pscsi, ramdisk)
     required: true
     default: null
   backstore_name:
@@ -18,10 +18,10 @@ options:
       - Name of backtore object in TargetCLI
     required: true
     default: null
-  path:
+  options:
     description:
-      - path to device
-    required: true
+      - options for create operation when creating backstore object
+    required: false
     default: null
   state:
     description:
@@ -36,10 +36,10 @@ author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 
 EXAMPLES = '''
 define new block backstore from disk/LV /dev/c7vg/LV1
-- targetcli_backstore: backstore_type=block backstore_name=test1 path=/dev/c7vg/LV1
+- targetcli_backstore: backstore_type=block backstore_name=test1 options=/dev/c7vg/LV1
 
 remove block backstore from disk/LV /dev/c7vg/LV2
-- targetcli_backstore: backstore_type=block backstore_name=test2 path=/dev/c7vg/LV2 state=absent
+- targetcli_backstore: backstore_type=block backstore_name=test2 state=absent
 
 '''
 
@@ -48,16 +48,15 @@ def main():
                 argument_spec = dict(
                         backstore_type=dict(required=True),
                         backstore_name=dict(required=True),
-                        path=dict(required=True),
+                        options=dict(required=False),
                         state=dict(default="present", choices=['present', 'absent']),
                 ),
                 supports_check_mode=True
         )
 
-        backstore_type = module.params['backstore_type']
-        backstore_name = module.params['backstore_name']
-        path = module.params['path']
         state = module.params['state']
+        if state == 'present' and not module.params['options']:
+            module.fail_json(msg="Missing options parameter needed for creating backstore object")
 
         result = {}
         
@@ -80,7 +79,7 @@ def main():
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s create %(backstore_name)s %(path)s'" % module.params)
+                    rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s create %(backstore_name)s %(options)s'" % module.params)
                     if rc == 0:
                         module.exit_json(changed=True)
                     else:
