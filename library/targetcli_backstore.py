@@ -43,8 +43,6 @@ remove block backstore from disk/LV /dev/c7vg/LV2
 
 '''
 
-from subprocess import call
-
 def main():
         module = AnsibleModule(
                 argument_spec = dict(
@@ -64,29 +62,29 @@ def main():
         result = {}
         
         try:
-            retcode = subprocess.call("targetcli '/backstores/" + backstore_type + "/" + backstore_name + " status'", shell=True) #FIXME think of something better than shell=True
-            if retcode == 0 and state == 'present':
+            rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s/%(backstore_name)s status'" % module.params)
+            if rc == 0 and state == 'present':
                 result['changed'] = False
-            elif retcode == 0 and state == 'absent':
+            elif rc == 0 and state == 'absent':
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    retcode = call("targetcli '/backstores/" + backstore_type + " delete " + backstore_name + "'", shell=True) #FIXME think of something better than shell=True
-                    if retcode == 0:
+                    rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s delete %(backstore_name)s'" % module.params)
+                    if rc == 0:
                         module.exit_json(changed=True)
                     else:
-                        module.fail_json(msg="Failed to delete backstores object")
+                        module.fail_json(msg="Failed to delete backstores object " + err)
             elif state == 'absent':
                 result['changed'] = False
             else:
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    retcode = call("targetcli '/backstores/" + backstore_type + " create " + backstore_name + " " + path + "'", shell=True) #FIXME think of something better than shell=True
-                    if retcode == 0:
+                    rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s create %(backstore_name)s %(path)s'" % module.params)
+                    if rc == 0:
                         module.exit_json(changed=True)
                     else:
-                        module.fail_json(msg="Failed to define backstores object")
+                        module.fail_json(msg="Failed to define backstores object " + err)
         except OSError as e:
             module.fail_json(msg="Failed to check backstore object - %s" %(e) )
         module.exit_json(**result)
