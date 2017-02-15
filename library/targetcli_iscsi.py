@@ -33,7 +33,7 @@ remove existing target
 - targetcli_iscsi: wwn=iqn.1994-05.com.redhat:hell state=absent
 '''
 
-from subprocess import call
+from distutils.spawn import find_executable
 
 def main():
         module = AnsibleModule(
@@ -47,18 +47,21 @@ def main():
         wwn = module.params['wwn']
         state = module.params['state']
 
+        if find_executable('targetcli') is None:
+            module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
+
         result = {}
         
         try:
-            retcode = subprocess.call("targetcli '/iscsi/" + wwn + "/tpg1 status'", shell=True) #FIXME think of something better than shell=True
-            if retcode == 0 and state == 'present':
+            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params)
+            if rc == 0 and state == 'present':
                 result['changed'] = False
-            elif retcode == 0 and state == 'absent':
+            elif rc == 0 and state == 'absent':
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    retcode = call("targetcli '/iscsi delete " + wwn + "'", shell=True) #FIXME think of something better than shell=True
-                    if retcode == 0:
+                    rc, out, err = module.run_command("targetcli '/iscsi delete %(wwn)s'" % module.params)
+                    if rc == 0:
                         module.exit_json(changed=True)
                     else:
                         module.fail_json(msg="Failed to delete iSCSI object")
@@ -68,8 +71,8 @@ def main():
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    retcode = call("targetcli '/iscsi create " + wwn + "'", shell=True) #FIXME think of something better than shell=True
-                    if retcode == 0:
+                    rc, out, err = module.run_command("targetcli '/iscsi create %(wwn)s'" % module.params)
+                    if rc == 0:
                         module.exit_json(changed=True)
                     else:
                         module.fail_json(msg="Failed to define iSCSI object")
