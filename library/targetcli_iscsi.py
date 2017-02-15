@@ -6,7 +6,7 @@ module: targetcli_iscsi
 short_description: TargetCLI iSCSI target module
 description:
      - module for handling iSCSI objects in targetcli ('/iscsi').
-version_added: "0.1"
+version_added: "2.0"
 options:
   wwn:
     description:
@@ -17,6 +17,7 @@ options:
     description:
       - Should the object be present or absent from TargetCLI configuration
     required: false
+    default: present
     choices: [present, absent]
 notes:
    - Tested on CentOS 7.2
@@ -24,7 +25,6 @@ requirements: [ ]
 author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 '''
 
-#FIXME
 EXAMPLES = '''
 define new iscsi target
 - targetcli_iscsi: wwn=iqn.1994-05.com.redhat:data
