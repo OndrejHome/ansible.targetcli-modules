@@ -6,7 +6,7 @@ module: targetcli_iscsi_lun
 short_description: TargetCLI LUN module
 description:
      - module for handling iSCSI LUN objects in targetcli ('/iscsi/.../tpg1/luns').
-version_added: "0.1"
+version_added: "2.0"
 options:
   wwn:
     description:
@@ -27,6 +27,7 @@ options:
     description:
       - Should the object be present or absent from TargetCLI configuration
     required: false
+    default: present
     choices: [present, absent]
 notes:
    - Tested on CentOS 7.2
@@ -42,7 +43,7 @@ remove iSCSI LUN
 - targetcli_iscsi_lun: wwn=iqn.1994-05.com.redhat:hell backstopre_type=block backstore_name=test2 state=absent
 '''
 
-from subprocess import call
+from distutils.spawn import find_executable
 
 def main():
         module = AnsibleModule(
@@ -55,7 +56,6 @@ def main():
                 supports_check_mode=True
         )
 
-        wwn = module.params['wwn']
         lun_path = module.params['backstore_type']+"/"+module.params['backstore_name']
         state = module.params['state']
 
@@ -64,16 +64,16 @@ def main():
         
         try:
             # check if the iscsi target exists
-            retcode = subprocess.call("targetcli '/iscsi/" + wwn + "/tpg1 status'", shell=True) #FIXME think of something better than shell=True
-            if retcode <> 0 and state == 'present':
+            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params)
+            if rc <> 0 and state == 'present':
                 result['changed'] = False
                 module.fail_json(msg="ISCSI object doesn't exists")
-            elif retcode <> 0 and state == 'absent':
+            elif rc <> 0 and state == 'absent':
                 result['changed'] = False
                 # ok iSCSI object doesn't exist so LUN is also not there --> success 
             else:
                 # lets parse the list of LUNs from the targetcli
-                output = subprocess.check_output("targetcli '/iscsi/" + wwn + "/tpg1/luns ls'",  shell=True)
+                rc, output, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/luns ls'" % module.params)
                 for row in output.split('\n'):
                     row_data = row.split(' ')
                     if len(row_data) < 2 or row_data[0] == 'luns':
@@ -93,8 +93,8 @@ def main():
                     if module.check_mode:
                         module.exit_json(changed=True)
                     else:
-                        retcode = call("targetcli '/iscsi/" + wwn + "/tpg1/luns create /backstores/" + lun_path + "'", shell=True) #FIXME think of something better than shell=True
-                        if retcode == 0:
+                        rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/luns create /backstores/%(backstore_type)s/%(backstore_name)s'" % module.params)
+                        if rc == 0:
                             module.exit_json(changed=True)
                         else:
                             module.fail_json(msg="Failed to create iSCSI LUN object")
@@ -104,13 +104,13 @@ def main():
                     if module.check_mode:
                         module.exit_json(changed=True)
                     else:
-                        retcode = call("targetcli '/iscsi/" + wwn + "/tpg1/luns delete lun" + luns[lun_path] + "'", shell=True) #FIXME think of something better than shell=True
-                        if retcode == 0:
+                        rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/luns delete lun" % module.params + luns[lun_path] + "'")
+                        if rc == 0:
                             module.exit_json(changed=True)
                         else:
-                            module.fail_json(msg="Failed to create iSCSI LUN object")
+                            module.fail_json(msg="Failed to delete iSCSI LUN object")
         except OSError as e:
-            module.fail_json(msg="Failed to check iSCSI ACL object - %s" %(e) )
+            module.fail_json(msg="Failed to check iSCSI lun object - %s" %(e) )
         module.exit_json(**result)
 
 # import module snippets
