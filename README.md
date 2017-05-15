@@ -5,15 +5,7 @@ Modules for interacting with targetcli command line utility.
 
 Requirements
 ------------
-
-
-Role Variables
---------------
-
-
-Example Playbook
-----------------
-
+`targetcli` has to be installed
 
 License
 -------
@@ -23,4 +15,5 @@ GPLv3
 Author Information
 ------------------
 
-To get in touch with author you can use email ondrej-xa2iel8u@famera.cz or create a issue on github when requesting some feature.
+* [Ondrej Faměra (OndrejHome)](https://github.com/OndrejHome/) _ondrej-xa2iel8u@famera.cz_
+* [Michel Weitbrecht (SlothOfAnarchy)](https://github.com/SlothOfAnarchy) _michel.weitbrecht@stuvus.uni-stuttgart.de_
