@@ -21,8 +21,8 @@ options:
   port:
     description:
       - port where the target shall be exported on
-    required: true
-    default: null
+    required: false
+    default: 3260
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
@@ -36,11 +36,14 @@ author: "Michel Weitbrecht <michel.weitbrecht@stuvus.uni-stuttgart.de>"
 '''
 
 EXAMPLES = '''
-define new iscsi ACL client
+define new portal with default port
+- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest ip=192.168.178.55
+
+define new portal with non-default port
 - targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest ip=192.168.178.55 port=2881
 
-remove iSCSI ACL
-- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest ip=192.168.178.55 port=2881
+remove the portal
+- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest ip=192.168.178.55 port=2881 state=absent
 '''
 
 from distutils.spawn import find_executable
@@ -50,7 +53,7 @@ def main():
                 argument_spec = dict(
                         wwn=dict(required=True),
                         ip=dict(required=True),
-                        port=dict(required=True),
+                        port=dict(default="3260"),
                         state=dict(default="present", choices=['present', 'absent']),
                 ),
                 supports_check_mode=True
