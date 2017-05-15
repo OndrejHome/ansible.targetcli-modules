@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: Ondrej Faměra
+  author: Ondrej Faměra, Michel Weitbrecht
   description: modules for managing targetcli.
   license: GPLv3
   min_ansible_version: 2.0
@@ -8,6 +8,12 @@ galaxy_info:
   - name: EL
     versions:
     - 7
+  - name: Ubuntu
+    versions:
+      - yakkety
+  - name: Debian
+    versions:
+      - jessie
   galaxy_tags:
   - system
   - storage
