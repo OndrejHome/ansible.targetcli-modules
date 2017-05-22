@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Ondrej Faměra, Michel Weitbrecht
-  description: modules for managing targetcli.
+  description: Modules for managing targetcli.
   license: GPLv3
   min_ansible_version: 2.0
   platforms:
