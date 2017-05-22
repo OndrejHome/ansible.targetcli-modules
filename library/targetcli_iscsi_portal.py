@@ -6,7 +6,7 @@ module: targetcli_iscsi_portal
 short_description: TargetCLI iSCSI portal module
 description:
      - module for handling iSCSI portal objects in targetcli ('/iscsi/.../tpg1/portals').
-version_added: "2.3"
+version_added: "2.4"
 options:
   wwn:
     description:

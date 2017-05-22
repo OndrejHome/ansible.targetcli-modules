@@ -6,7 +6,7 @@ module: targetcli_iscsi_auth
 short_description: TargetCLI iSCSI authentication module
 description:
      - module for setting iSCSI authentication parameters in targetcli ('/iscsi/.../tpg1').
-version_added: "2.3"
+version_added: "2.4"
 options:
   wwn:
     description:
