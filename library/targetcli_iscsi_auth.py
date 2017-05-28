@@ -13,6 +13,11 @@ options:
       - WWN of iSCSI target (server)
     required: true
     default: null
+  initiator_wwn:
+    description:
+      - WWN of iSCSI initiator (client)
+    required: true
+    default: null
   userid:
     description:
       - userid needed by the initiator to access devices on this target
@@ -41,13 +46,13 @@ author: "Michel Weitbrecht <michel.weitbrecht@stuvus.uni-stuttgart.de>"
 
 EXAMPLES = '''
 set userid and password
-- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest userid=hypervisor01 password=12345
+- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest initiator_wwn=iqn.1994-05.com.redhat:client1 userid=hypervisor01 password=12345
 
 reset userid and password
-- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest userid=None password=None
+- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest initiator_wwn=iqn.1994-05.com.redhat:client1 userid=None password=None
 
 set userid and password as well as mutual userid and password
-- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest userid=hypervisor01 password=12345 userid_mutual=storage01 password_mutual=54321
+- targetcli_iscsi_portal: wwn=iqn.2003-01.org.linux-iscsi.storage01.x8664:portaltest initiator_wwn=iqn.1994-05.com.redhat:client1 userid=hypervisor01 password=12345 userid_mutual=storage01 password_mutual=54321
 
 '''
 
@@ -57,6 +62,7 @@ def main():
         module = AnsibleModule(
                 argument_spec = dict(
                         wwn=dict(required=True),
+                        initiator_wwn=dict(required=True),
                         userid=dict(required=True),
                         password=dict(required=True, no_log=True),
                         userid_mutual=dict(default="None"),
@@ -69,7 +75,11 @@ def main():
             module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
   
         try:
-            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/ get auth'" % module.params)
+            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s status'" % module.params)
+            if rc != 0:
+                module.fail_json(msg="Referenced initiator acl does not exist.")
+
+            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s get auth'" % module.params)
             userid = re.search('(?<=\n\n  userid\=).*(?=\n)',out).group(0)
             password = re.search('(?<=\n\n  password\=).*(?=\n)',out).group(0)
             userid_mutual = re.search('(?<=\n\n  userid_mutual\=).*(?=\n)',out).group(0)
@@ -82,7 +92,7 @@ def main():
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1 set auth password=%(password)s userid=%(userid)s password_mutual=%(password_mutual)s userid_mutual=%(userid_mutual)s'" % module.params)
+                    rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s set auth password=%(password)s userid=%(userid)s password_mutual=%(password_mutual)s userid_mutual=%(userid_mutual)s'" % module.params)
                     if rc == 0:
                         module.exit_json(changed=True)
                     else:
