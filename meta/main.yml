@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: Ondrej Faměra, Michel Weitbrecht
+  description: Modules for managing targetcli.
+  license: GPLv3
+  min_ansible_version: 2.0
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  - name: Ubuntu
+    versions:
+      - yakkety
+  - name: Debian
+    versions:
+      - jessie
+  galaxy_tags:
+  - system
+  - storage
+  - storage:iscsi
+dependencies: []
