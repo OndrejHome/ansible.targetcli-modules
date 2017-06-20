@@ -23,6 +23,11 @@ options:
       - name of backstore object
     required: true
     default: null
+  attributes:
+    description:
+      - Attributes for the defined LUN
+    required: false
+    default: null
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
@@ -37,7 +42,7 @@ author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 
 EXAMPLES = '''
 define new iSCSI LUN
-- targetcli_iscsi_lun: wwn=iqn.1994-05.com.redhat:fastvm backstopre_type=block backstore_name=test1
+- targetcli_iscsi_lun: wwn=iqn.1994-05.com.redhat:fastvm backstopre_type=block backstore_name=test1 attributes={{ "emulate_tpu=1" }}
 
 remove iSCSI LUN
 - targetcli_iscsi_lun: wwn=iqn.1994-05.com.redhat:hell backstopre_type=block backstore_name=test2 state=absent
@@ -51,12 +56,14 @@ def main():
                         wwn=dict(required=True),
                         backstore_type=dict(required=True),
                         backstore_name=dict(required=True),
+                        attributes=dict(required=False),
                         state=dict(default="present", choices=['present', 'absent']),
                 ),
                 supports_check_mode=True
         )
 
         lun_path = module.params['backstore_type']+"/"+module.params['backstore_name']
+        attributes = module.params['attributes']
         state = module.params['state']
 
         result = {}
@@ -95,7 +102,14 @@ def main():
                     else:
                         rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/luns create /backstores/%(backstore_type)s/%(backstore_name)s'" % module.params)
                         if rc == 0:
-                            module.exit_json(changed=True)
+                            if attributes:
+                                rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s/%(backstore_name)s set attribute %(attributes)s'" % module.params)
+                                if rc == 0:
+                                    module.exit_json(changed=True)
+                                else:
+                                    module.fail_json(msg="Failed to set LUN's attributes")
+                            else:
+                                module.exit_json(changed=True)
                         else:
                             module.fail_json(msg="Failed to create iSCSI LUN object")
 
