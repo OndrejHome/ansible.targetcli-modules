@@ -23,6 +23,11 @@ options:
       - options for create operation when creating backstore object
     required: false
     default: null
+  attributes:
+    description:
+      - Attributes for the defined LUN
+    required: false
+    default: null
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
@@ -38,6 +43,9 @@ EXAMPLES = '''
 define new block backstore from disk/LV /dev/c7vg/LV1
 - targetcli_backstore: backstore_type=block backstore_name=test1 options=/dev/c7vg/LV1
 
+define new block backstore from disk/LV /dev/c7vg/LV2 with attributes
+- targetcli_backstore: backstore_type=block backstore_name=test2 options=/dev/c7vg/LV2 attributes={{ "emulate_tpu=1" }}
+
 remove block backstore from disk/LV /dev/c7vg/LV2
 - targetcli_backstore: backstore_type=block backstore_name=test2 state=absent
 
@@ -51,10 +59,13 @@ def main():
                         backstore_type=dict(required=True),
                         backstore_name=dict(required=True),
                         options=dict(required=False),
+                        attributes=dict(required=False),
                         state=dict(default="present", choices=['present', 'absent']),
                 ),
                 supports_check_mode=True
         )
+
+        attributes = module.params['attributes']
 
         state = module.params['state']
         if state == 'present' and not module.params['options']:
@@ -86,7 +97,14 @@ def main():
                 else:
                     rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s create %(backstore_name)s %(options)s'" % module.params)
                     if rc == 0:
-                        module.exit_json(changed=True)
+                        if attributes:
+                            rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s/%(backstore_name)s set attribute %(attributes)s'" % module.params)
+                            if rc == 0:
+                                module.exit_json(changed=True)
+                            else:
+                                module.fail_json(msg="Failed to set LUN's attributes")
+                        else:
+                            module.exit_json(changed=True)
                     else:
                         module.fail_json(msg="Failed to define backstores object " + err)
         except OSError as e:
