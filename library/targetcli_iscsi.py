@@ -60,36 +60,42 @@ def main():
         result = {}
         
         try:
-            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params)
+            cmd = "targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params
+            rc, out, err = module.run_command(cmd)
             if rc == 0 and state == 'present':
                 result['changed'] = False
             elif rc == 0 and state == 'absent':
+                result['changed'] = True
                 if module.check_mode:
-                    module.exit_json(changed=True)
+                    module.exit_json(**result)
                 else:
-                    rc, out, err = module.run_command("targetcli '/iscsi delete %(wwn)s'" % module.params)
+                    cmd = "targetcli '/iscsi delete %(wwn)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
                     if rc == 0:
-                        module.exit_json(changed=True)
+                        module.exit_json(**result)
                     else:
-                        module.fail_json(msg="Failed to delete iSCSI object")
+                        module.fail_json(msg="Failed to delete iSCSI object using command " + cmd, output=out, error=err)
             elif state == 'absent':
                 result['changed'] = False
             else:
+                result['changed'] = True
                 if module.check_mode:
-                    module.exit_json(changed=True)
+                    module.exit_json(**result)
                 else:
-                    rc, out, err = module.run_command("targetcli '/iscsi create %(wwn)s'" % module.params)
+                    cmd = "targetcli '/iscsi create %(wwn)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
                     if rc == 0:
                         if attributes:
-                            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1 set attribute %(attributes)s'" % module.params)
+                            cmd = "targetcli '/iscsi/%(wwn)s/tpg1 set attribute %(attributes)s'" % module.params
+                            rc, out, err = module.run_command(cmd)
                             if rc == 0:
-                                module.exit_json(changed=True)
+                                module.exit_json(**result)
                             else:
-                                module.fail_json(msg="Failed to set TPG's attributes")
+                                module.fail_json(msg="Failed to set TPG's attributes using command " + cmd, output=out, error=err)
                         else:
-                            module.exit_json(changed=True)
+                            module.exit_json(**result)
                     else:
-                        module.fail_json(msg="Failed to define iSCSI object")
+                        module.fail_json(msg="Failed to define iSCSI object using command " + cmd, output=out, error=err)
         except OSError as e:
             module.fail_json(msg="Failed to check iSCSI object - %s" %(e) )
         module.exit_json(**result)

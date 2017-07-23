@@ -59,21 +59,27 @@ def main():
         lun_path = module.params['backstore_type']+"/"+module.params['backstore_name']
         state = module.params['state']
 
+        if find_executable('targetcli') is None:
+            module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
+
         result = {}
         luns = {}
         
         try:
             # check if the iscsi target exists
-            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params)
+            cmd = "targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params
+            rc, out, err = module.run_command(cmd)
             if rc <> 0 and state == 'present':
                 result['changed'] = False
-                module.fail_json(msg="ISCSI object doesn't exists")
+                module.fail_json(msg="ISCSI object doesn't exists", cmd=cmd, output=out, error=err)
             elif rc <> 0 and state == 'absent':
                 result['changed'] = False
                 # ok iSCSI object doesn't exist so LUN is also not there --> success 
             else:
                 # lets parse the list of LUNs from the targetcli
-                rc, output, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/luns ls'" % module.params)
+                cmd = "targetcli '/iscsi/%(wwn)s/tpg1/luns ls'" % module.params
+                rc, output, err = module.run_command(cmd)
+                result['luns_output'] = output
                 for row in output.split('\n'):
                     row_data = row.split(' ')
                     if len(row_data) < 2 or row_data[0] == 'luns':
@@ -90,25 +96,29 @@ def main():
                     result['changed'] = False
                 elif state == 'present' and not luns.has_key(lun_path):
                     # create LUN
+                    result['changed'] = True
                     if module.check_mode:
-                        module.exit_json(changed=True)
+                        module.exit_json(**result)
                     else:
-                        rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/luns create /backstores/%(backstore_type)s/%(backstore_name)s'" % module.params)
+                        cmd = "targetcli '/iscsi/%(wwn)s/tpg1/luns create /backstores/%(backstore_type)s/%(backstore_name)s'" % module.params
+                        rc, out, err = module.run_command(cmd)
                         if rc == 0:
-                            module.exit_json(changed=True)
+                            module.exit_json(**result)
                         else:
-                            module.fail_json(msg="Failed to create iSCSI LUN object")
+                            module.fail_json(msg="Failed to create iSCSI LUN object using command " + cmd, output=out, error=err)
 
                 elif state == 'absent' and luns.has_key(lun_path):
                     # delete LUN
+                    result['changed'] = True
                     if module.check_mode:
-                        module.exit_json(changed=True)
+                        module.exit_json(**result)
                     else:
-                        rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/luns delete lun" % module.params + luns[lun_path] + "'")
+                        cmd = "targetcli '/iscsi/%(wwn)s/tpg1/luns delete lun" % module.params + luns[lun_path] + "'"
+                        rc, out, err = module.run_command(cmd)
                         if rc == 0:
-                            module.exit_json(changed=True)
+                            module.exit_json(**result)
                         else:
-                            module.fail_json(msg="Failed to delete iSCSI LUN object")
+                            module.fail_json(msg="Failed to delete iSCSI LUN object using command " + cmd, output=out, error=err)
         except OSError as e:
             module.fail_json(msg="Failed to check iSCSI lun object - %s" %(e) )
         module.exit_json(**result)

@@ -58,29 +58,34 @@ def main():
         result = {}
         
         try:
-            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s status'" % module.params)
+            cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s status'" % module.params
+            rc, out, err = module.run_command(cmd)
             if rc == 0 and state == 'present':
                 result['changed'] = False
             elif rc == 0 and state == 'absent':
+                result['changed'] = True
                 if module.check_mode:
-                    module.exit_json(changed=True)
+                    module.exit_json(**result)
                 else:
-                    rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls delete %(initiator_wwn)s'" % module.params)
+                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls delete %(initiator_wwn)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
                     if rc == 0:
-                        module.exit_json(changed=True)
+                        module.exit_json(**result)
                     else:
-                        module.fail_json(msg="Failed to delete iSCSI ACL object")
+                        module.fail_json(msg="Failed to delete iSCSI ACL object using command " + cmd, output=out, error=err)
             elif state == 'absent':
                 result['changed'] = False
             else:
+                result['changed'] = True
                 if module.check_mode:
-                    module.exit_json(changed=True)
+                    module.exit_json(**result)
                 else:
-                    rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls create %(initiator_wwn)s'" % module.params)
+                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls create %(initiator_wwn)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
                     if rc == 0:
-                        module.exit_json(changed=True)
+                        module.exit_json(**result)
                     else:
-                        module.fail_json(msg="Failed to define iSCSI ACL object")
+                        module.fail_json(msg="Failed to define iSCSI ACL object using command " + cmd, output=out,error=err)
         except OSError as e:
             module.fail_json(msg="Failed to check iSCSI ACL object - %s" %(e) )
         module.exit_json(**result)
