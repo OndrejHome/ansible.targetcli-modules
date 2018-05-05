@@ -58,49 +58,54 @@ set userid and password as well as mutual userid and password
 
 from distutils.spawn import find_executable
 import re
+
+
 def main():
-        module = AnsibleModule(
-                argument_spec = dict(
-                        wwn=dict(required=True),
-                        initiator_wwn=dict(required=True),
-                        userid=dict(required=True),
-                        password=dict(required=True, no_log=True),
-                        userid_mutual=dict(default="None"),
-                        password_mutual=dict(default="None", no_log=True),
-                ),
-                supports_check_mode=True
-        )
+  module = AnsibleModule(
+    argument_spec=dict(
+      wwn=dict(required=True),
+      initiator_wwn=dict(required=True),
+      userid=dict(required=True),
+      password=dict(required=True, no_log=True),
+      userid_mutual=dict(default="None"),
+      password_mutual=dict(default="None", no_log=True),
+    ),
+    supports_check_mode=True)
 
-        if find_executable('targetcli') is None:
-            module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
-  
-        try:
-            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s status'" % module.params)
-            if rc != 0:
-                module.fail_json(msg="Referenced initiator acl does not exist.")
+  if find_executable('targetcli') is None:
+    module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
 
-            rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s get auth'" % module.params)
-            userid = re.search('(?<=\n\n  userid\=).*(?=\n)',out).group(0)
-            password = re.search('(?<=\n\n  password\=).*(?=\n)',out).group(0)
-            userid_mutual = re.search('(?<=\n\n  userid_mutual\=).*(?=\n)',out).group(0)
-            password_mutual = re.search('(?<=\n\n  password_mutual\=).*(?=\n)',out).group(0)
-            
-            if rc != 0:
-                module.fail_json(msg="failed to read authentication parameters")
+  try:
+    rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s status'" % module.params)
+    if rc != 0:
+      module.fail_json(msg="Referenced initiator acl does not exist.")
 
-            if password != module.params['password'] or userid != module.params['userid'] or password_mutual != module.params['password_mutual'] or userid_mutual != module.params['userid_mutual']:
-                if module.check_mode:
-                    module.exit_json(changed=True)
-                else:
-                    rc, out, err = module.run_command("targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s set auth password=%(password)s userid=%(userid)s password_mutual=%(password_mutual)s userid_mutual=%(userid_mutual)s'" % module.params)
-                    if rc == 0:
-                        module.exit_json(changed=True)
-                    else:
-                        module.fail_json(msg="Failed to set iSCSI authentication parameters")
+    rc, out, err = module.run_command(
+      "targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s get auth'" % module.params)
+    userid = re.search('(?<=userid\=).*(?=\n)', out).group(0)
+    password = re.search('(?<=password\=).*(?=\n)', out).group(0)
+    userid_mutual = re.search('(?<=mutual_userid\=).*(?=\n)', out).group(0)
+    password_mutual = re.search('(?<=mutual_password\=).*(?=\n)', out).group(0)
 
-        except OSError as e:
-            module.fail_json(msg="Failed to check iSCSI authentication - %s" %(e) )
-        module.exit_json()
+    if rc != 0:
+      module.fail_json(msg="failed to read authentication parameters")
+
+    if password != module.params['password'] or userid != module.params['userid'] or password_mutual != module.params['password_mutual'] or userid_mutual != module.params['userid_mutual']:
+      if module.check_mode:
+        module.exit_json(changed=True)
+      else:
+        rc, out, err = module.run_command(
+          "targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s set auth password=%(password)s userid=%(userid)s mutual_password=%(password_mutual)s mutual_userid=%(userid_mutual)s'"
+          % module.params)
+        if rc == 0:
+          module.exit_json(changed=True)
+        else:
+          module.fail_json(msg="Failed to set iSCSI authentication parameters")
+
+  except OSError as e:
+    module.fail_json(msg="Failed to check iSCSI authentication - %s" % (e))
+  module.exit_json()
+
 
 # import module snippets
 from ansible.module_utils.basic import *
