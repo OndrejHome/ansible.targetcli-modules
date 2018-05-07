@@ -10,10 +10,12 @@ galaxy_info:
     - 7
   - name: Ubuntu
     versions:
-      - yakkety
+      - artful
+      - bionic
   - name: Debian
     versions:
-      - jessie
+      - stretch
+
   galaxy_tags:
   - system
   - storage
