@@ -45,9 +45,10 @@ remove iSCSI LUN
 
 from distutils.spawn import find_executable
 
+
 def main():
         module = AnsibleModule(
-                argument_spec = dict(
+                argument_spec=dict(
                         wwn=dict(required=True),
                         backstore_type=dict(required=True),
                         backstore_name=dict(required=True),
@@ -64,17 +65,17 @@ def main():
 
         result = {}
         luns = {}
-        
+
         try:
             # check if the iscsi target exists
             cmd = "targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params
             rc, out, err = module.run_command(cmd)
-            if rc <> 0 and state == 'present':
+            if rc != 0 and state == 'present':
                 result['changed'] = False
                 module.fail_json(msg="ISCSI object doesn't exists", cmd=cmd, output=out, error=err)
-            elif rc <> 0 and state == 'absent':
+            elif rc != 0 and state == 'absent':
                 result['changed'] = False
-                # ok iSCSI object doesn't exist so LUN is also not there --> success 
+                # ok iSCSI object doesn't exist so LUN is also not there --> success
             else:
                 # lets parse the list of LUNs from the targetcli
                 cmd = "targetcli '/iscsi/%(wwn)s/tpg1/luns ls'" % module.params
@@ -87,14 +88,14 @@ def main():
                     if row_data[1] == "luns":
                         continue
                     luns[row_data[5][1:]] = row_data[3][3:]
-                if state == 'present' and luns.has_key(lun_path):
+                if state == 'present' and lun_path in luns:
                     # LUN is already there and present
                     result['changed'] = False
                     result['lun_id'] = luns[lun_path]
-                elif state == 'absent' and not luns.has_key(lun_path):
+                elif state == 'absent' and lun_path not in luns:
                     # LUN is not there and should not be there
                     result['changed'] = False
-                elif state == 'present' and not luns.has_key(lun_path):
+                elif state == 'present' and lun_path not in luns:
                     # create LUN
                     result['changed'] = True
                     if module.check_mode:
@@ -107,7 +108,7 @@ def main():
                         else:
                             module.fail_json(msg="Failed to create iSCSI LUN object using command " + cmd, output=out, error=err)
 
-                elif state == 'absent' and luns.has_key(lun_path):
+                elif state == 'absent' and lun_path in luns:
                     # delete LUN
                     result['changed'] = True
                     if module.check_mode:
@@ -120,7 +121,7 @@ def main():
                         else:
                             module.fail_json(msg="Failed to delete iSCSI LUN object using command " + cmd, output=out, error=err)
         except OSError as e:
-            module.fail_json(msg="Failed to check iSCSI lun object - %s" %(e) )
+            module.fail_json(msg="Failed to check iSCSI lun object - %s" % (e))
         module.exit_json(**result)
 
 # import module snippets

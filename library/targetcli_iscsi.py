@@ -40,9 +40,10 @@ remove existing target
 
 from distutils.spawn import find_executable
 
+
 def main():
         module = AnsibleModule(
-                argument_spec = dict(
+                argument_spec=dict(
                         wwn=dict(required=True),
                         attributes=dict(required=False),
                         state=dict(default="present", choices=['present', 'absent']),
@@ -58,7 +59,7 @@ def main():
             module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
 
         result = {}
-        
+
         try:
             cmd = "targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params
             rc, out, err = module.run_command(cmd)
@@ -97,7 +98,7 @@ def main():
                     else:
                         module.fail_json(msg="Failed to define iSCSI object using command " + cmd, output=out, error=err)
         except OSError as e:
-            module.fail_json(msg="Failed to check iSCSI object - %s" %(e) )
+            module.fail_json(msg="Failed to check iSCSI object - %s" % (e))
         module.exit_json(**result)
 
 # import module snippets

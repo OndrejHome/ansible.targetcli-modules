@@ -53,9 +53,10 @@ remove block backstore from disk/LV /dev/c7vg/LV2
 
 from distutils.spawn import find_executable
 
+
 def main():
         module = AnsibleModule(
-                argument_spec = dict(
+                argument_spec=dict(
                         backstore_type=dict(required=True),
                         backstore_name=dict(required=True),
                         options=dict(required=False),
@@ -75,7 +76,7 @@ def main():
             module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
 
         result = {}
-        
+
         try:
             rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s/%(backstore_name)s status'" % module.params)
             if rc == 0 and state == 'present':
@@ -113,7 +114,7 @@ def main():
                     else:
                         module.fail_json(msg="Failed to define backstores object using command " + cmd, output=out, error=err)
         except OSError as e:
-            module.fail_json(msg="Failed to check backstore object - %s" %(e) )
+            module.fail_json(msg="Failed to check backstore object - %s" % (e))
         module.exit_json(**result)
 
 # import module snippets
