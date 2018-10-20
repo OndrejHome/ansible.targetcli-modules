@@ -30,7 +30,7 @@ Example playbook for including modules in your playbook
 
     - hosts: servers
       roles:
-         - { role: OndrejHome.targetcli-modules }
+         - { role: 'OndrejHome.targetcli-modules' }
 
 License
 -------
