@@ -66,31 +66,31 @@ def main():
         result = {}
         
         try:
-            rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s/%(backstore_name)s status'" % module.params)
+            rc, out, err = module.run_command("targetcli '/backstores/{backstore_type}/{backstore_name} status'".format(**module.params))
             if rc == 0 and state == 'present':
                 result['changed'] = False
             elif rc == 0 and state == 'absent':
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s delete %(backstore_name)s'" % module.params)
+                    rc, out, err = module.run_command("targetcli '/backstores/{backstore_type} delete {backstore_name}'".format(**module.params))
                     if rc == 0:
                         module.exit_json(changed=True)
                     else:
-                        module.fail_json(msg="Failed to delete backstores object " + err)
+                        module.fail_json(msg="Failed to delete backstores object {}".format(err))
             elif state == 'absent':
                 result['changed'] = False
             else:
                 if module.check_mode:
                     module.exit_json(changed=True)
                 else:
-                    rc, out, err = module.run_command("targetcli '/backstores/%(backstore_type)s create %(backstore_name)s %(options)s'" % module.params)
+                    rc, out, err = module.run_command("targetcli '/backstores/{backstore_type} create {backstore_name} {options}'".format(**module.params))
                     if rc == 0:
                         module.exit_json(changed=True)
                     else:
-                        module.fail_json(msg="Failed to define backstores object " + err)
+                        module.fail_json(msg="Failed to define backstores object {}".format(err))
         except OSError as e:
-            module.fail_json(msg="Failed to check backstore object - %s" %(e) )
+            module.fail_json(msg="Failed to check backstore object - {}".format(e))
         module.exit_json(**result)
 
 # import module snippets
