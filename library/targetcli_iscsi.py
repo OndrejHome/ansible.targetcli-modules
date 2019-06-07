@@ -6,7 +6,7 @@ module: targetcli_iscsi
 short_description: TargetCLI iSCSI target module
 description:
      - module for handling iSCSI objects in targetcli ('/iscsi').
-version_added: "2.0"
+version_added: "2.1"
 options:
   wwn:
     description:
@@ -16,6 +16,16 @@ options:
   attributes:
     description:
       - Attributes for the defined target
+    required: false
+    default: null
+  parameters:
+    description:
+      - Parameters for the defined target
+    required: false
+    default: null
+  auth:
+    description:
+      - authentication properties for the defined target
     required: false
     default: null
   state:
@@ -32,7 +42,11 @@ author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 
 EXAMPLES = '''
 define new iscsi target
-- targetcli_iscsi: wwn=iqn.1994-05.com.redhat:data attributes={{ "demo_mode_write_protect=0" }}
+- targetcli_iscsi: > 
+                   wwn=iqn.1994-05.com.redhat:data
+                   attributes={{ "demo_mode_write_protect=0" }}
+                   parameters={{ "maxConnections=10" }}
+                   auth={{ "mutual_userid=target_user mutual_password=target_user_pw" }}
 
 remove existing target
 - targetcli_iscsi: wwn=iqn.1994-05.com.redhat:hell state=absent
@@ -44,8 +58,10 @@ from distutils.spawn import find_executable
 def main():
         module = AnsibleModule(
                 argument_spec=dict(
-                        wwn=dict(required=True),
-                        attributes=dict(required=False),
+                        wwn=dict(required=True, type='str'),
+                        attributes=dict(required=False, type='str'),
+                        parameters=dict(required=False, type='str'),
+                        auth=dict(required=False, type='str'),
                         state=dict(default="present", choices=['present', 'absent']),
                 ),
                 supports_check_mode=True
@@ -53,6 +69,8 @@ def main():
 
         wwn = module.params['wwn']
         attributes = module.params['attributes']
+        parameters = module.params['parameters']
+        auth = module.params['auth']
         state = module.params['state']
 
         if find_executable('targetcli') is None:
@@ -89,12 +107,19 @@ def main():
                         if attributes:
                             cmd = "targetcli '/iscsi/%(wwn)s/tpg1 set attribute %(attributes)s'" % module.params
                             rc, out, err = module.run_command(cmd)
-                            if rc == 0:
-                                module.exit_json(**result)
-                            else:
+                            if rc != 0:
                                 module.fail_json(msg="Failed to set TPG's attributes using command " + cmd, output=out, error=err)
-                        else:
-                            module.exit_json(**result)
+                        if parameters:
+                            cmd = "targetcli '/iscsi/%(wwn)s/tpg1 set parameter %(parameters)s'" % module.params
+                            rc, out, err = module.run_command(cmd)
+                            if rc != 0:
+                                module.fail_json(msg="Failed to set TPG's parameters using command " + cmd, output=out, error=err)
+                        if auth:
+                            cmd = "targetcli '/iscsi/%(wwn)s/tpg1 set auth %(auth)s'" % module.params
+                            rc, out, err = module.run_command(cmd)
+                            if rc != 0:
+                                module.fail_json(msg="Failed to set TPG's auth using command " + cmd, output=out, error=err)
+                        module.exit_json(**result)
                     else:
                         module.fail_json(msg="Failed to define iSCSI object using command " + cmd, output=out, error=err)
         except OSError as e:
