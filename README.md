@@ -23,6 +23,8 @@ Provided Modules
 
 *targetcli_iscsi_acl* - add/remove acls to/from iscsi object ('/iscsi/.../tpg1/acls')
 
+*targetcli_iscsi_portal* - add/remove portals to/from iscsi object ('/iscsi/.../tpg1/portals')
+
 Example Playbook
 ----------------
 
