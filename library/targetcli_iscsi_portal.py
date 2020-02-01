@@ -74,9 +74,9 @@ def main():
                 module.fail_json(msg="ISCSI object doesn't exists", cmd=cmd, output=out, error=err)
             elif rc != 0 and state == 'absent':
                 result['changed'] = False
-                # ok iSCSI object doesn't exist so LUN is also not there --> success
+                # ok iSCSI object doesn't exist so portal is also not there --> success
             else:
-                # lets parse the list of LUNs from the targetcli
+                # lets parse the list of portals from the targetcli
                 cmd = "targetcli '/iscsi/%(wwn)s/tpg1/portals ls'" % module.params
                 rc, output, err = module.run_command(cmd)
                 result['portals_output'] = output
@@ -88,13 +88,13 @@ def main():
                         continue
                     portals.append(row_data[3])
                 if state == 'present' and portal in portals:
-                    # LUN is already there and present
+                    # portal is already there and present
                     result['changed'] = False
                 elif state == 'absent' and portal not in portals:
-                    # LUN is not there and should not be there
+                    # portal is not there and should not be there
                     result['changed'] = False
                 elif state == 'present' and portal not in portals:
-                    # create LUN
+                    # create portal
                     result['changed'] = True
                     if module.check_mode:
                         module.exit_json(**result)
@@ -107,7 +107,7 @@ def main():
                             module.fail_json(msg="Failed to create iSCSI portal object using command " + cmd, output=out, error=err)
 
                 elif state == 'absent' and portal in portals:
-                    # delete LUN
+                    # delete portal
                     result['changed'] = True
                     if module.check_mode:
                         module.exit_json(**result)
