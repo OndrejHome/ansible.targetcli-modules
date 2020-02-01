@@ -31,11 +31,16 @@ author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 '''
 
 EXAMPLES = '''
-define new iscsi ACL client
-- targetcli_iscsi_acl: wwn=iqn.1994-05.com.redhat:data initiator_wwn=iqn.1994-05.com.redhat:client1
+- name: define new iscsi ACL client
+  targetcli_iscsi_acl:
+    wwn: 'iqn.1994-05.com.redhat:data'
+    initiator_wwn: 'iqn.1994-05.com.redhat:client1'
 
-remove iSCSI ACL
-- targetcli_iscsi_acl: wwn=iqn.1994-05.com.redhat:data initiator_wwn=iqn.1994-05.com.redhat:client1 state=absent
+- name: remove iSCSI ACL
+  targetcli_iscsi_acl:
+    wwn: 'iqn.1994-05.com.redhat:data'
+    initiator_wwn: 'iqn.1994-05.com.redhat:client1'
+    state: 'absent'
 '''
 
 from distutils.spawn import find_executable

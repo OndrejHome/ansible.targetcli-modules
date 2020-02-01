@@ -31,11 +31,15 @@ author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 '''
 
 EXAMPLES = '''
-define new iscsi target
-- targetcli_iscsi: wwn=iqn.1994-05.com.redhat:data attributes={{ "demo_mode_write_protect=0" }}
+- name: define new iscsi target
+  targetcli_iscsi:
+    wwn: 'iqn.1994-05.com.redhat:data'
+    attributes: {{ "demo_mode_write_protect=0" }}
 
-remove existing target
-- targetcli_iscsi: wwn=iqn.1994-05.com.redhat:hell state=absent
+- name: remove existing target
+  targetcli_iscsi:
+    wwn: 'iqn.1994-05.com.redhat:hell'
+    state: 'absent'
 '''
 
 from distutils.spawn import find_executable

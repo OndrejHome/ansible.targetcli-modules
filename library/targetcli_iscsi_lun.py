@@ -36,11 +36,18 @@ author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 '''
 
 EXAMPLES = '''
-define new iSCSI LUN
-- targetcli_iscsi_lun: wwn=iqn.1994-05.com.redhat:fastvm backstopre_type=block backstore_name=test1
+- name: define new iSCSI LUN
+  targetcli_iscsi_lun:
+    wwn: 'iqn.1994-05.com.redhat:fastvm'
+    backstopre_type: 'block'
+    backstore_name: 'test1'
 
-remove iSCSI LUN
-- targetcli_iscsi_lun: wwn=iqn.1994-05.com.redhat:hell backstopre_type=block backstore_name=test2 state=absent
+- name: remove iSCSI LUN
+  targetcli_iscsi_lun:
+    wwn: iqn.1994-05.com.redhat:hell
+    backstopre_type: 'block'
+    backstore_name: 'test2'
+    state: 'absent'
 '''
 
 from distutils.spawn import find_executable

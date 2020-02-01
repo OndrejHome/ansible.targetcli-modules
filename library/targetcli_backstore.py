@@ -40,15 +40,24 @@ author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
 '''
 
 EXAMPLES = '''
-define new block backstore from disk/LV /dev/c7vg/LV1
-- targetcli_backstore: backstore_type=block backstore_name=test1 options=/dev/c7vg/LV1
+- name: define new block backstore from disk/LV /dev/c7vg/LV1
+  targetcli_backstore:
+    backstore_type: 'block'
+    backstore_name: 'test1'
+    options: '/dev/c7vg/LV1'
 
-define new block backstore from disk/LV /dev/c7vg/LV2 with attributes
-- targetcli_backstore: backstore_type=block backstore_name=test2 options=/dev/c7vg/LV2 attributes={{ "emulate_tpu=1" }}
+- name: define new block backstore from disk/LV /dev/c7vg/LV2 with attributes
+  argetcli_backstore:
+    backstore_type: 'block'
+    backstore_name: 'test2'
+    options: '/dev/c7vg/LV2'
+    attributes: {{ "emulate_tpu=1" }}
 
-remove block backstore from disk/LV /dev/c7vg/LV2
-- targetcli_backstore: backstore_type=block backstore_name=test2 state=absent
-
+- name: remove block backstore from disk/LV /dev/c7vg/LV2
+  targetcli_backstore:
+    backstore_type: 'block'
+    backstore_name: 'test2'
+    state: 'absent'
 '''
 
 from distutils.spawn import find_executable

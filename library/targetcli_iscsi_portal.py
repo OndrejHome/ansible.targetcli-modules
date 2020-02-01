@@ -35,11 +35,16 @@ author: "Loïc <loic@karafun.com>"
 '''
 
 EXAMPLES = '''
-define new iSCSI portal
-- targetcli_iscsi_lun: wwn=iqn.2020-01.com.recisio.iscsi:alpha ip=192.168.1.10
+- name: define new iSCSI portal
+  targetcli_iscsi_lun:
+    wwn: 'iqn.2020-01.com.recisio.iscsi:alpha'
+    ip: '192.168.1.10'
 
-remove iSCSI portal
-- targetcli_iscsi_lun: wwn=iqn.2020-01.com.recisio.iscsi:alpha ip=192.168.1.10 state=absent
+- name: remove iSCSI portal
+  targetcli_iscsi_lun:
+    wwn: 'iqn.2020-01.com.recisio.iscsi:alpha'
+    ip: '192.168.1.10'
+    state: 'absent'
 '''
 
 from distutils.spawn import find_executable
