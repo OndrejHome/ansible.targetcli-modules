@@ -25,21 +25,24 @@ options:
       - WWN of iSCSI target (server)
     required: true
     default: null
+    type: str
   initiator_wwn:
     description:
       - WWN of iSCSI initiator (client)
     required: true
     default: null
+    type: str
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
     required: false
     default: present
     choices: [present, absent]
+    type: str
 notes:
-   - Tested on CentOS 7.2
+   - Tested on CentOS 7.7
 requirements: [ ]
-author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
+author: "Ondrej Famera (@OndrejHome)"
 '''
 
 EXAMPLES = '''

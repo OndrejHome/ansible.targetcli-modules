@@ -25,30 +25,36 @@ options:
       - Type of storage in TargetCLI (block, fileio, pscsi, ramdisk)
     required: true
     default: null
+    type: str
   backstore_name:
     description:
       - Name of backtore object in TargetCLI
     required: true
     default: null
+    type: str
   options:
     description:
       - options for create operation when creating backstore object
     required: false
     default: null
+    type: str
   attributes:
     description:
       - Attributes for the defined LUN
     required: false
     default: null
+    type: str
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
     required: false
+    default: present
     choices: [present, absent]
+    type: str
 notes:
-   - Tested on CentOS 7.2
+   - Tested on CentOS 7.7
 requirements: [ ]
-author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
+author: "Ondrej Famera (@OndrejHome)"
 '''
 
 EXAMPLES = '''
@@ -59,11 +65,11 @@ EXAMPLES = '''
     options: '/dev/c7vg/LV1'
 
 - name: define new block backstore from disk/LV /dev/c7vg/LV2 with attributes
-  argetcli_backstore:
+  targetcli_backstore:
     backstore_type: 'block'
     backstore_name: 'test2'
     options: '/dev/c7vg/LV2'
-    attributes: {{ "emulate_tpu=1" }}
+    attributes: 'emulate_tpu=1'
 
 - name: remove block backstore from disk/LV /dev/c7vg/LV2
   targetcli_backstore:

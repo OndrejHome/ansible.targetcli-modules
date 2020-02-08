@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2020, Loïc <loic@karafun.com>
+# Copyright: (c) 2020, Ondrej Famera <ondrej-xa2iel8u@famera.cz>
 # GNU General Public License v3.0+ (see LICENSE-GPLv3.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # Apache License v2.0 (see LICENSE-APACHE2.txt or http://www.apache.org/licenses/LICENSE-2.0)
 
@@ -26,11 +27,13 @@ options:
       - WWN of iSCSI target (server)
     required: true
     default: null
+    type: str
   portal_ip:
     description:
       - ip of portal object
     required: true
     default: null
+    type: str
   portal_port:
     description:
       - port of portal object
@@ -43,20 +46,29 @@ options:
     required: false
     default: present
     choices: [present, absent]
+    type: str
+notes:
+   - Tested on CentOS 7.7
 requirements: [ ]
-author: "Loïc <loic@karafun.com>"
+author: "Loïc (@psykotox)"
 '''
 
 EXAMPLES = '''
-- name: define new iSCSI portal
-  targetcli_iscsi_lun:
+- name: remove default 0.0.0.0:3260 portal
+  targetcli_iscsi_portal:
     wwn: 'iqn.2020-01.com.recisio.iscsi:alpha'
-    ip: '192.168.1.10'
+    portal_ip: '0.0.0.0'
+    state: 'absent'
+
+- name: define new iSCSI portal
+  targetcli_iscsi_portal:
+    wwn: 'iqn.2020-01.com.recisio.iscsi:alpha'
+    portal_ip: '192.168.1.10'
 
 - name: remove iSCSI portal
-  targetcli_iscsi_lun:
+  targetcli_iscsi_portal:
     wwn: 'iqn.2020-01.com.recisio.iscsi:alpha'
-    ip: '192.168.1.10'
+    portal_ip: '192.168.1.10'
     state: 'absent'
 '''
 

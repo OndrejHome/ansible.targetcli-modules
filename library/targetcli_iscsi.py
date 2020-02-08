@@ -25,28 +25,31 @@ options:
       - WWN of iSCSI target
     required: true
     default: null
+    type: str
   attributes:
     description:
       - Attributes for the defined target
     required: false
     default: null
+    type: str
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
     required: false
     default: present
     choices: [present, absent]
+    type: str
 notes:
-   - Tested on CentOS 7.2
+   - Tested on CentOS 7.7
 requirements: [ ]
-author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
+author: "Ondrej Famera (@OndrejHome)"
 '''
 
 EXAMPLES = '''
 - name: define new iscsi target
   targetcli_iscsi:
     wwn: 'iqn.1994-05.com.redhat:data'
-    attributes: {{ "demo_mode_write_protect=0" }}
+    attributes: 'demo_mode_write_protect=0'
 
 - name: remove existing target
   targetcli_iscsi:

@@ -25,39 +25,43 @@ options:
       - WWN of iSCSI target (server)
     required: true
     default: null
+    type: str
   backstore_type:
     description:
       - type of backstore object
     required: true
     default: null
+    type: str
   backstore_name:
     description:
       - name of backstore object
     required: true
     default: null
+    type: str
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
     required: false
     default: present
     choices: [present, absent]
+    type: str
 notes:
-   - Tested on CentOS 7.2
+   - Tested on CentOS 7.7
 requirements: [ ]
-author: "Ondrej Famera <ondrej-xa2iel8u@famera.cz>"
+author: "Ondrej Famera (@OndrejHome)"
 '''
 
 EXAMPLES = '''
 - name: define new iSCSI LUN
   targetcli_iscsi_lun:
     wwn: 'iqn.1994-05.com.redhat:fastvm'
-    backstopre_type: 'block'
+    backstore_type: 'block'
     backstore_name: 'test1'
 
 - name: remove iSCSI LUN
   targetcli_iscsi_lun:
-    wwn: iqn.1994-05.com.redhat:hell
-    backstopre_type: 'block'
+    wwn: 'iqn.1994-05.com.redhat:data'
+    backstore_type: 'block'
     backstore_name: 'test2'
     state: 'absent'
 '''
