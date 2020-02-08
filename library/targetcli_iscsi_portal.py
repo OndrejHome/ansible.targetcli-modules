@@ -36,6 +36,7 @@ options:
       - port of portal object
     required: false
     default: 3260
+    type: int
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
@@ -67,13 +68,13 @@ def main():
         argument_spec=dict(
             wwn=dict(required=True),
             portal_ip=dict(required=True),
-            portal_port=dict(default="3260", required=False),
+            portal_port=dict(type='int', default="3260", required=False),
             state=dict(default="present", choices=['present', 'absent']),
         ),
         supports_check_mode=True
     )
 
-    portal = module.params['portal_ip'] + ":" + module.params['portal_port']
+    portal = module.params['portal_ip'] + ":" + str(module.params['portal_port'])
     state = module.params['state']
 
     if find_executable('targetcli') is None:
