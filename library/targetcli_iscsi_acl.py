@@ -108,6 +108,7 @@ def main():
         module.fail_json(msg="Failed to check iSCSI ACL object - %s" % (e))
     module.exit_json(**result)
 
+
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 if __name__ == "__main__":

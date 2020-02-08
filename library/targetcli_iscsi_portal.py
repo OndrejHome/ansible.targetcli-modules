@@ -73,7 +73,7 @@ def main():
         supports_check_mode=True
     )
 
-    portal = module.params['portal_ip']+":"+module.params['portal_port']
+    portal = module.params['portal_ip'] + ":" + module.params['portal_port']
     state = module.params['state']
 
     if find_executable('targetcli') is None:
@@ -138,6 +138,7 @@ def main():
     except OSError as e:
         module.fail_json(msg="Failed to check iSCSI portal object - %s" % (e))
     module.exit_json(**result)
+
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule

@@ -129,7 +129,7 @@ def main():
                         if rc == 0:
                             module.exit_json(**result)
                         else:
-                            module.fail_json(msg="Failed to set LUN's attributes using cmd "+cmd, output=out, error=err)
+                            module.fail_json(msg="Failed to set LUN's attributes using cmd " + cmd, output=out, error=err)
                     else:
                         module.exit_json(**result)
                 else:
@@ -137,6 +137,7 @@ def main():
     except OSError as e:
         module.fail_json(msg="Failed to check backstore object - %s" % (e))
     module.exit_json(**result)
+
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule

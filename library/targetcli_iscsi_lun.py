@@ -76,7 +76,7 @@ def main():
         supports_check_mode=True
     )
 
-    lun_path = module.params['backstore_type']+"/"+module.params['backstore_name']
+    lun_path = module.params['backstore_type'] + "/" + module.params['backstore_name']
     state = module.params['state']
 
     if find_executable('targetcli') is None:
@@ -142,6 +142,7 @@ def main():
     except OSError as e:
         module.fail_json(msg="Failed to check iSCSI lun object - %s" % (e))
     module.exit_json(**result)
+
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
