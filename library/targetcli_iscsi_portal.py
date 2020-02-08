@@ -63,81 +63,81 @@ from distutils.spawn import find_executable
 
 
 def main():
-        module = AnsibleModule(
-                argument_spec=dict(
-                        wwn=dict(required=True),
-                        portal_ip=dict(required=True),
-                        portal_port=dict(default="3260", required=False),
-                        state=dict(default="present", choices=['present', 'absent']),
-                ),
-                supports_check_mode=True
-        )
+    module = AnsibleModule(
+        argument_spec=dict(
+            wwn=dict(required=True),
+            portal_ip=dict(required=True),
+            portal_port=dict(default="3260", required=False),
+            state=dict(default="present", choices=['present', 'absent']),
+        ),
+        supports_check_mode=True
+    )
 
-        portal = module.params['portal_ip']+":"+module.params['portal_port']
-        state = module.params['state']
+    portal = module.params['portal_ip']+":"+module.params['portal_port']
+    state = module.params['state']
 
-        if find_executable('targetcli') is None:
-            module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
+    if find_executable('targetcli') is None:
+        module.fail_json(msg="'targetcli' executable not found. Install 'targetcli'.")
 
-        result = {}
-        portals = []
+    result = {}
+    portals = []
 
-        try:
-            # check if the iscsi target exists
-            cmd = "targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params
-            rc, out, err = module.run_command(cmd)
-            if rc != 0 and state == 'present':
+    try:
+        # check if the iscsi target exists
+        cmd = "targetcli '/iscsi/%(wwn)s/tpg1 status'" % module.params
+        rc, out, err = module.run_command(cmd)
+        if rc != 0 and state == 'present':
+            result['changed'] = False
+            module.fail_json(msg="ISCSI object doesn't exists", cmd=cmd, output=out, error=err)
+        elif rc != 0 and state == 'absent':
+            result['changed'] = False
+            # ok iSCSI object doesn't exist so portal is also not there --> success
+        else:
+            # lets parse the list of portals from the targetcli
+            cmd = "targetcli '/iscsi/%(wwn)s/tpg1/portals ls'" % module.params
+            rc, output, err = module.run_command(cmd)
+            result['portals_output'] = output
+            for row in output.split('\n'):
+                row_data = row.split(' ')
+                if len(row_data) < 2 or row_data[0] == 'portals':
+                    continue
+                if row_data[1] == "portals":
+                    continue
+                portals.append(row_data[3])
+            if state == 'present' and portal in portals:
+                # portal is already there and present
                 result['changed'] = False
-                module.fail_json(msg="ISCSI object doesn't exists", cmd=cmd, output=out, error=err)
-            elif rc != 0 and state == 'absent':
+            elif state == 'absent' and portal not in portals:
+                # portal is not there and should not be there
                 result['changed'] = False
-                # ok iSCSI object doesn't exist so portal is also not there --> success
-            else:
-                # lets parse the list of portals from the targetcli
-                cmd = "targetcli '/iscsi/%(wwn)s/tpg1/portals ls'" % module.params
-                rc, output, err = module.run_command(cmd)
-                result['portals_output'] = output
-                for row in output.split('\n'):
-                    row_data = row.split(' ')
-                    if len(row_data) < 2 or row_data[0] == 'portals':
-                        continue
-                    if row_data[1] == "portals":
-                        continue
-                    portals.append(row_data[3])
-                if state == 'present' and portal in portals:
-                    # portal is already there and present
-                    result['changed'] = False
-                elif state == 'absent' and portal not in portals:
-                    # portal is not there and should not be there
-                    result['changed'] = False
-                elif state == 'present' and portal not in portals:
-                    # create portal
-                    result['changed'] = True
-                    if module.check_mode:
+            elif state == 'present' and portal not in portals:
+                # create portal
+                result['changed'] = True
+                if module.check_mode:
+                    module.exit_json(**result)
+                else:
+                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/portals create ip_address=%(portal_ip)s ip_port=%(portal_port)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
+                    if rc == 0:
                         module.exit_json(**result)
                     else:
-                        cmd = "targetcli '/iscsi/%(wwn)s/tpg1/portals create ip_address=%(portal_ip)s ip_port=%(portal_port)s'" % module.params
-                        rc, out, err = module.run_command(cmd)
-                        if rc == 0:
-                            module.exit_json(**result)
-                        else:
-                            module.fail_json(msg="Failed to create iSCSI portal object using command " + cmd, output=out, error=err)
+                        module.fail_json(msg="Failed to create iSCSI portal object using command " + cmd, output=out, error=err)
 
-                elif state == 'absent' and portal in portals:
-                    # delete portal
-                    result['changed'] = True
-                    if module.check_mode:
+            elif state == 'absent' and portal in portals:
+                # delete portal
+                result['changed'] = True
+                if module.check_mode:
+                    module.exit_json(**result)
+                else:
+                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/portals delete ip_address=%(portal_ip)s ip_port=%(portal_port)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
+                    if rc == 0:
                         module.exit_json(**result)
                     else:
-                        cmd = "targetcli '/iscsi/%(wwn)s/tpg1/portals delete ip_address=%(portal_ip)s ip_port=%(portal_port)s'" % module.params
-                        rc, out, err = module.run_command(cmd)
-                        if rc == 0:
-                            module.exit_json(**result)
-                        else:
-                            module.fail_json(msg="Failed to delete iSCSI portal object using command " + cmd, output=out, error=err)
-        except OSError as e:
-            module.fail_json(msg="Failed to check iSCSI portal object - %s" % (e))
-        module.exit_json(**result)
+                        module.fail_json(msg="Failed to delete iSCSI portal object using command " + cmd, output=out, error=err)
+    except OSError as e:
+        module.fail_json(msg="Failed to check iSCSI portal object - %s" % (e))
+    module.exit_json(**result)
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
