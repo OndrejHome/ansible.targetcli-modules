@@ -38,6 +38,12 @@ options:
     required: true
     default: null
     type: str
+  auto_add_luns:
+    description:
+      - Automatically map LUN to all existing ACLs
+    required: false
+    default: True
+    type: bool
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
@@ -75,6 +81,7 @@ def main():
             wwn=dict(required=True),
             backstore_type=dict(required=True),
             backstore_name=dict(required=True),
+            auto_add_luns=dict(default=True, type='bool', required=False),
             state=dict(default="present", choices=['present', 'absent']),
         ),
         supports_check_mode=True
@@ -124,7 +131,8 @@ def main():
                 if module.check_mode:
                     module.exit_json(**result)
                 else:
-                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/luns create /backstores/%(backstore_type)s/%(backstore_name)s'" % module.params
+                    module.params['add_luns'] = 'true' if module.params['auto_add_luns'] else 'false'
+                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/luns create add_mapped_luns=%(add_luns)s /backstores/%(backstore_type)s/%(backstore_name)s'" % module.params
                     rc, out, err = module.run_command(cmd)
                     if rc == 0:
                         module.exit_json(**result)
