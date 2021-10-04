@@ -25,6 +25,8 @@ Provided Modules
 
 *targetcli_iscsi_portal* - add/remove portals to/from iscsi object ('/iscsi/.../tpg1/portals')
 
+*library/targetcli_iscsi_acl_mapped_lun* - add/remove intividual LUNs to/from ACLs within target ('/iscsi/.../tpg1/acls/.../')
+
 Example Playbook
 ----------------
 
