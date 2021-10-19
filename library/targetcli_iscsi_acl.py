@@ -32,6 +32,30 @@ options:
     required: true
     default: null
     type: str
+  userid:
+    description:
+      - the userid
+    required: false
+    default: null
+    type: str
+  password:
+    description:
+      - the password
+    required: false
+    default: null
+    type: str
+  mutual_userid:
+    description:
+      - the mutual userid
+    required: false
+    default: null
+    type: str
+  mutual_password:
+    description:
+      - the mutual password
+    required: false
+    default: null
+    type: str
   state:
     description:
       - Should the object be present or absent from TargetCLI configuration
@@ -67,6 +91,10 @@ def main():
             wwn=dict(required=True),
             initiator_wwn=dict(required=True),
             state=dict(default="present", choices=['present', 'absent']),
+            userid=dict(required=False),
+            password=dict(required=False, no_log=True),
+            mutual_userid=dict(required=False),
+            mutual_password=dict(required=False, no_log=True),
         ),
         supports_check_mode=True
     )
@@ -81,34 +109,78 @@ def main():
     try:
         cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s status'" % module.params
         rc, out, err = module.run_command(cmd)
-        if rc == 0 and state == 'present':
-            result['changed'] = False
-        elif rc == 0 and state == 'absent':
-            result['changed'] = True
-            if module.check_mode:
-                module.exit_json(**result)
-            else:
-                cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls delete %(initiator_wwn)s'" % module.params
-                rc, out, err = module.run_command(cmd)
-                if rc == 0:
+        result["status"] = (rc,out,err)
+        if state == 'absent':
+            if rc == 0:
+                if module.check_mode:
                     module.exit_json(**result)
                 else:
-                    module.fail_json(msg="Failed to delete iSCSI ACL object using command " + cmd, output=out, error=err)
-        elif state == 'absent':
-            result['changed'] = False
-        else:
-            result['changed'] = True
-            if module.check_mode:
-                module.exit_json(**result)
+                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls delete %(initiator_wwn)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
+                    if rc == 0:
+                        module.exit_json(**result)
+                    else:
+                        module.fail_json(msg="Failed to delete iSCSI ACL object using command " + cmd, output=out, error=err)
             else:
-                cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls create %(initiator_wwn)s'" % module.params
-                rc, out, err = module.run_command(cmd)
-                if rc == 0:
+                result['changed'] = False
+            module.exit_json(**result)
+        elif state == 'present':
+            if rc == 0:
+                result['changed'] = False
+            else:
+                result['changed'] = True
+                if module.check_mode:
                     module.exit_json(**result)
                 else:
-                    module.fail_json(msg="Failed to define iSCSI ACL object using command " + cmd, output=out, error=err)
+                    cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls create %(initiator_wwn)s'" % module.params
+                    rc, out, err = module.run_command(cmd)
+                    if rc != 0:
+                        module.fail_json(msg="Failed to define iSCSI ACL object using command " + cmd, output=out, error=err)
     except OSError as e:
         module.fail_json(msg="Failed to check iSCSI ACL object - %s" % (e))
+
+    try:
+        fieldnames=["userid","password","mutual_userid","mutual_password"]
+        acls = (module.params.get(i, "") for i in fieldnames)
+        if not any(acls):
+            module.exit_json(**result)
+
+        cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s get auth'" % module.params
+        rc, out, err = module.run_command(cmd)
+        # default to None
+        values = {k:None for k in fieldnames}
+        for line in out.split("\n"):
+            if not "=" in line:
+                continue
+            key,value = line.split("=",1)
+            # ignore empty values - stay None
+            if value != '' and key in fieldnames:
+                values[key]=value
+
+        for name in fieldnames:
+            if module.params.get(name, None) == values[name]:
+                continue
+
+            result['changed'] = True
+
+            if module.check_mode:
+                module.exit_json(**result)
+
+            cmd = "targetcli '/iscsi/%(wwn)s/tpg1/acls/%(initiator_wwn)s set auth %(name)s=%(value)s'" % {
+                "wwn":module.params["wwn"],
+                "initiator_wwn":module.params["initiator_wwn"],
+                "name":name,
+                "value":module.params[name]
+            }
+
+            rc, out, err = module.run_command(cmd)
+            if rc != 0:
+                module.fail_json(msg="Failed to define iSCSI ACL auth using command " + cmd, output=out, error=err)
+
+
+    except OSError as e:
+        module.fail_json(msg="Failed to check iSCSI ACL object - %s" % (e))
+
     module.exit_json(**result)
 
 
